@@ -7,10 +7,11 @@ using Random
 
 include("spike.jl")
 include("semiortho.jl")
+include("phasetrans.jl")
 
 export generate_spiked_data, generate_spiked_data!
 export SemiOrthogonal, TallSkinnyIdentity, schatten_norm_pow, geometric_risk, geometric_risk_sequential
-
+export weight_bbp, upper_idx, signal_thres, limit_geometric_risk
 
 
 end
