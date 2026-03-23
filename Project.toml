@@ -1,0 +1,7 @@
+name = "GeometricPCA"
+uuid = "19012818-a316-451e-9c66-65eb3d5fa740"
+authors = ["YUN Ho <ho.yun@epfl.ch> and contributors"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.11"
