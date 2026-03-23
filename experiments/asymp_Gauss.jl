@@ -1,12 +1,15 @@
-using Pkg
-Pkg.activate(".")
-using GeometricPCA
+# cd("experiments")
+# ] activate .
+
 using LinearAlgebra
 using Random
 using Statistics
 using CairoMakie
 using Dates
 
+# --------------------------------------------------------------------
+#                      Data Simulation Functions
+# --------------------------------------------------------------------
 """
 Simulate the empirical statistic for the covariance spiked model.
 """
@@ -54,6 +57,7 @@ function simulate_statistic(n::Int, p::Int, d::Int, k::Int, lambdas::Vector{Floa
 
     return T_n_vals
 end
+
 """
 Generate random samples from the theoretical asymptotic distribution.
 """
@@ -79,7 +83,9 @@ function generate_theoretical_limit(p::Int, d::Int, k::Int, lambdas::Vector{Floa
     return limit_vals
 end
 
-# Configuration
+# --------------------------------------------------------------------
+#                      Configuration when k <= d
+# --------------------------------------------------------------------
 p = 30
 d = 5
 k = 3
@@ -125,7 +131,9 @@ filename = "figures/asymp_$(Dates.format(now(), "yymmdd_HHMMSS")).png"
 save(filename, fig)
 
 
-######## Configuration when k > d
+# --------------------------------------------------------------------
+#                      Configuration when k > d
+# --------------------------------------------------------------------
 p = 30
 d = 5
 k = 7
@@ -159,11 +167,6 @@ for (i, n) in enumerate(ns)
     density!(ax, T_n_vals, color=(:royalblue, 0.5), label="Empirical", strokewidth=2)
     axislegend(ax, position=:rt)
 end
-
-# linkaxes!(axs...)
-# for ax in axs
-#     xlims!(ax, 0, 30)
-# end
 
 display(fig)
 
