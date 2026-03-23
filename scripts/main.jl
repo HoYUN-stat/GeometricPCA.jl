@@ -13,18 +13,18 @@ using .PlotUtils
 #          Global Parameters
 # --------------------------------------------------------------------
 n = 300
-γ = 0.2
+γ = 0.8
 d_true = 15
 s = 1.0
 D_ref = 20
-α = 0.7 # Ratio of data to use for the training/reference fold
+α = 0.5 # Ratio of data to use for the training/reference fold
 
 p = round(Int, γ * n)
 #λ_l = 1 + √γ * s * (d_true-l)
 lambdas = collect(d_true:-1:1) .* s .* sqrt(γ) .+ 1.0
 
-# Sanity check : Expected minimum
-lower_idx(lambdas, γ; α)
+# Sanity check : Expected minimum d*(γ)
+expected_idx = lower_idx(lambdas, γ; α)
 
 # --------------------------------------------------------------------
 #          Data Generation
