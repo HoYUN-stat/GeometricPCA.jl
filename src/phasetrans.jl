@@ -5,7 +5,7 @@
     weight_bbp(s::Float64, γ::Float64; α::Float64=1.0) -> Float64
 
 Computes the asymptotic cross-alignment limit `δ_l=f(s_l)`.
-Handles the full-sample (α=1.0) and data-split (0 < α < 1) cases.
+Handles the ideal (α=1.0) and data-split (0 < α < 1) cases.
 """
 function weight_bbp(s::Float64, γ::Float64; α::Float64=1.0)
     @assert γ > 0.0 "Gamma must be strictly positive."
@@ -113,15 +113,16 @@ function signal_thres(γ::Float64; α::Float64=1.0)
 end
 
 
+
 # ------------------------------------------------------------------
 # 4. Macroscopic Geometric Risk / Subspace Recovery
 # ------------------------------------------------------------------
 """
-    limit_geometric_risk(lambdas::Vector{Float64}, γ::Float64; α::Float64=1.0, D::Int=length(lambdas))
+    limit_geometric_risk(lambdas::Vector{Float64}, γ::Float64, D::Int, k::Int; α::Float64=1.0) -> Float64
 
-Computes the deterministic macroscopic chordal distance limit between the true 
-subspace (dimension D) and the empirical subspace (dimension k).
-Handles both full-sample (α=1.0) and data-splitting (0 < α < 1) limits.
+Computes the deterministic limit of the chordal distance limit between the reference 
+subspace (dimension D) and the validation subspace (dimension k).
+Handles both ideal (α=1.0) and data-splitting (0 < α < 1) limits.
 """
 function limit_geometric_risk(lambdas::Vector{Float64}, γ::Float64, D::Int, k::Int; α::Float64=1.0)
     @assert γ > 0.0 "Gamma must be strictly positive."
@@ -149,4 +150,37 @@ function limit_geometric_risk(lambdas::Vector{Float64}, γ::Float64, D::Int, k::
 
     # D_∞ = (|I| + |J|) - 2 * sum(alignments)
     return Float64(D + k) - 2.0 * sum_alignment
+end
+
+# ------------------------------------------------------------------
+# 5. Optimal Truncation Index (d_*)
+# ------------------------------------------------------------------
+"""
+    lower_idx(lambdas::Vector{Float64}, γ::Float64; α::Float64=1.0) -> Int
+
+Returns `d_*(γ)` or `d_*(γ1, γ2)`, the optimal truncation index.
+This is the maximum index `l` such that the asymptotic alignment limit `f(s_l) > 1/2`,
+meaning the signal is strong enough to actively reduce the geometric risk.
+"""
+function lower_idx(lambdas::Vector{Float64}, γ::Float64; α::Float64=1.0)
+    @assert γ > 0.0
+    @assert 0.0 < α <= 1.0
+
+    # Retrieve the critical signal threshold s* where f(s*) = 1/2
+    s_star = signal_thres(γ; α=α)
+
+    # Translate s* back into the eigenvalue scale: λ = 1 + s * √γ
+    λ_star = 1.0 + s_star * sqrt(γ)
+
+    # Find the last index strictly greater than the optimal threshold
+    d_star = 0
+    @inbounds for l in eachindex(lambdas)
+        if lambdas[l] > λ_star
+            d_star = l
+        else
+            break # lambdas are non-increasing, so we can safely break early
+        end
+    end
+
+    return d_star
 end

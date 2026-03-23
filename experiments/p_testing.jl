@@ -1,6 +1,6 @@
-using Pkg
-Pkg.activate(".")
-using GeometricPCA
+# using Pkg
+# Pkg.activate(".")
+# using GeometricPCA
 using CairoMakie, Random, Statistics, Dates, LinearAlgebra
 
 # 1. Configure Simulation
@@ -12,7 +12,7 @@ n = 200
 
 true_d = 10
 #p=50
-D_max=20
+D_max = 20
 p_vec = collect(100:200:1000)
 #scaling_vec = collect(0.1:0.1:1)
 
@@ -34,20 +34,20 @@ for i in 1:length(p_vec)
     println("Parameters: n=$n, p=$p, true_d=$true_d, D_max=$D_max, train_split_ratio=$train_split_ratio")
     risk_matrix[:, i] = risk_estimate(n, p, true_d, D_max, train_split_ratio, signal_strength, noise_var)
 end
-    # Plot
-    println("\n--- Step 9: Plotting Trends ---")
-    fig = Figure(size=(800, 600), fontsize=25)
-    fig[0, 1] = Label(fig, "PCA plot (n=$n, p=varying, D=$D_max, d_true=$true_d, SNR=$signal_strength)", fontsize=24, tellwidth=false)
+# Plot
+println("\n--- Step 9: Plotting Trends ---")
+fig = Figure(size=(800, 600), fontsize=25)
+fig[0, 1] = Label(fig, "PCA plot (n=$n, p=varying, D=$D_max, d_true=$true_d, SNR=$signal_strength)", fontsize=24, tellwidth=false)
 
-    ax_risk = Axis(fig[1, 1],
-                   title="Geometric Risk Method (Split Ratio: $train_split_ratio)",
-                   xlabel="Candidate Dimension (k)",
-                   ylabel="Squared Chordal Risk"
-                   )
+ax_risk = Axis(fig[1, 1],
+    title="Geometric Risk Method (Split Ratio: $train_split_ratio)",
+    xlabel="Candidate Dimension (k)",
+    ylabel="Squared Chordal Risk"
+)
 vlines!(ax_risk, [true_d], color=:black, linestyle=:dash, linewidth=2)
 for i in 1:length(p_vec)
-    p=p_vec[i]
-    plot_risk_curve!(ax_risk, risk_matrix[:,i], true_d, p)
+    p = p_vec[i]
+    plot_risk_curve!(ax_risk, risk_matrix[:, i], true_d, p)
 end
 
 axislegend(ax_risk, position=:rb, framevisible=true)

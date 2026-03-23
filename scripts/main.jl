@@ -1,93 +1,91 @@
-using Pkg
-Pkg.activate(".")
+# cd("experiments")
+# ] activate .
+# dev ..
 using GeometricPCA
 using CairoMakie, Random, Statistics, Dates, LinearAlgebra
 
+include("../utils/plot_utils.jl")
+using .PlotUtils
+
 # --- Main Script Execution ---
 
-# 1. Configure Simulation
-println("--- Step 1: Configuring Simulation ---")
-n = 500
-p = 60
-true_d = 15
-D_max = 40
-signal_strength = 50.0
-noise_var = 1.0
-train_split_ratio = 0.5 # Ratio of data to use for the training/reference fold
-println("Parameters: n=$n, p=$p, true_d=$true_d, D_max=$D_max, train_split_ratio=$train_split_ratio")
+# --------------------------------------------------------------------
+#          Global Parameters
+# --------------------------------------------------------------------
+n = 300
+γ = 0.2
+d_true = 15
+s = 1.0
+D_ref = 20
+α = 0.7 # Ratio of data to use for the training/reference fold
 
+p = round(Int, γ * n)
+#λ_l = 1 + √γ * s * (d_true-l)
+lambdas = collect(d_true:-1:1) .* s .* sqrt(γ) .+ 1.0
 
-# 2. Generate Data
-println("\n--- Step 2: Generating Spiked Covariance Data ---")
-X = generate_spiked_data(n, p, true_d, signal_strength, noise_var)
-println("Data matrix size: ", size(X))
+# Sanity check : Expected minimum
+lower_idx(lambdas, γ; α)
 
-# 3. Split Data for Geometric Risk
-println("\n--- Step 3: Splitting Data for Geometric Risk Method ---")
-idx = randperm(n)
-split_point = round(Int, n * train_split_ratio)
-X_train = view(X, idx[1:split_point], :)
-X_val = view(X, idx[split_point+1:end], :)
+# --------------------------------------------------------------------
+#          Data Generation
+# --------------------------------------------------------------------
+Random.seed!(123);
+# X = generate_spiked_data(n, p, d_true, λ);
+X = generate_spiked_data(n, p, lambdas);
+
+# Split Data for Geometric Risk
+Random.seed!(123);
+idx = randperm(n);
+split_point = round(Int, n * α)
+X_train = view(X, idx[1:split_point], :);
+X_val = view(X, idx[split_point+1:end], :);
 println("Train fold size: $(size(X_train)), Validation fold size: $(size(X_val))")
 
-# 4. & 5. Compute PCA on Folds
-println("\n--- Step 4 & 5: Computing PCA on Folds ---")
-Cov_train = cov(X_train);
-eig_train = eigen(Symmetric(Cov_train));
-V_reference = eig_train.vectors[:, end:-1:end-D_max+1]
+# Compute SVD on Folds
+_, _, U_reference = svd(X_train);
+U_ref = SemiOrthogonal(U_reference[:, 1:D_ref]);
 
-Cov_val = cov(X_val);
-eig_val = eigen(Symmetric(Cov_val));
-U_candidates = eig_val.vectors[:, end:-1:end-D_max+1]
+_, _, V_validate = svd(X_val);
+V_val = SemiOrthogonal(V_validate[:, 1:D_ref]);
 
-# 6. Evaluate Geometric Risk
-println("\n--- Step 6: Evaluating Geometric Risk ---")
-risk_curve = compute_geometric_risk_sequential(U_candidates, V_reference, D_max)
+# Evaluate Geometric Risk
+# risk_curve = geometric_risk_sequential(U_ref, V_val)
+scaled_risk_curve = geometric_risk_sequential(U_ref, V_val; scaled=true)
 
-# 7. Display Geometric Risk Results
-println("\n--- Step 7: Geometric Risk Results ---")
-estimated_d_geom = argmin(risk_curve)
-println("Risk values: ", round.(risk_curve; digits=2))
-println("-----------------")
-println("True Dimension:              ", true_d)
-println("Estimated Dimension (Geom.): ", estimated_d_geom)
+# Display Geometric Risk Results
+estimated_d_geom = argmin(scaled_risk_curve)
+println("Scaled Risk values: ", round.(scaled_risk_curve; digits=2))
 
-# 8. Calculate Eigenvalues for Scree Plot
-println("\n--- Step 8: Calculating Eigenvalues for Scree Plot ---")
+# Calculate Eigenvalues for Scree Plot
 # Eigenvalues from the full sample covariance matrix
 full_cov = cov(X)
-sample_eigenvalues = sort(eigen(Symmetric(full_cov)).values, rev=true)[1:D_max]
-# Theoretical true eigenvalues of the spiked model
-true_eigenvalues = [fill(signal_strength + noise_var, true_d); fill(noise_var, p - true_d)][1:D_max]
-println("Top $D_max sample eigenvalues: ", round.(sample_eigenvalues; digits=2))
-println("Top $D_max true eigenvalues:   ", round.(true_eigenvalues; digits=2))
+sample_eigenvalues = eigen(Symmetric(full_cov)).values[end:-1:end-D_ref+1]
+true_eigenvalues = [lambdas; fill(1.0, p - d_true)][1:D_ref]
+# println("Top $D_max sample eigenvalues: ", round.(sample_eigenvalues; digits=2))
+# println("Top $D_max true eigenvalues:   ", round.(true_eigenvalues; digits=2))
 
-# 9. Plot Side-by-Side Comparison
-println("\n--- Step 9: Plotting Comparison ---")
+# --------------------------------------------------------------------
+#          Visualization
+# --------------------------------------------------------------------
 fig = Figure(size=(800, 600), fontsize=25)
-fig[0, 1] = Label(fig, "PCA plot (n=$n, p=$p, D=$D_max, d_true=$true_d, SNR=$signal_strength)", fontsize=24, tellwidth=false)
+fig[0, 1:2] = Label(fig, "PCA plot (n=$n, p=$p, D=$D_ref, d*=$d_true)", fontsize=24, tellwidth=false)
 
 ax_risk = Axis(fig[1, 1],
-    title="Geometric Risk Method (Split Ratio: $train_split_ratio)",
+    title="Geometric PCA (α = $α)",
     xlabel="Candidate Dimension (k)",
-    ylabel="Squared Chordal Risk"
+    ylabel="Scaled Chordal Risk"
 )
-plot_risk_curve!(ax_risk, risk_curve, true_d)
+plot_risk_curve!(ax_risk, scaled_risk_curve, d_true, p)
 
-#ax_scree = Axis(fig[1, 2],
-    #title="Scree Plot Method (Full Dataset)",
-    #xlabel="Principal Component Index",
-    #ylabel="Eigenvalue"
-#)
-#plot_scree!(ax_scree, sample_eigenvalues, true_eigenvalues, true_d)
+ax_scree = Axis(fig[1, 2],
+    title="Scree Plot",
+    xlabel="Principal Component Index",
+    ylabel="Eigenvalue"
+)
+plot_scree!(ax_scree, sample_eigenvalues, true_eigenvalues, d_true)
 
 display(fig)
 
-# 10. Save the Figure
-#println("\n--- Step 10: Saving Figure ---")
-#if !isdir("figures")
-    #println("Creating 'figures' directory.")
-    #mkdir("figures")
-#end
-#filename = "figures/pca_comparison_$(Dates.format(now(), "yymmdd_HHMMSS")).png"
-#save(filename, fig)
+# Save the Figure
+filename = "figures/pca_comparison_$(Dates.format(now(), "yymmdd_HHMMSS")).png"
+save(filename, fig)

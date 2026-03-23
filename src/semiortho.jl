@@ -173,21 +173,19 @@ function geometric_risk(p_dim::Int, D::Int, V::SemiOrthogonal; kwargs...)
     return geometric_risk(U, V; kwargs...)
 end
 
-
 """
     geometric_risk_sequential(U::SemiOrthogonal, V::SemiOrthogonal; p::Int=2, scaled::Bool=false) -> Vector{Float64}
 
 Computes the risk curve between a reference matrix `U` and sequential truncations of `V`.
-
 The risk at index `k` of the returned vector is `geometric_risk(U, V[:, 1:k])`.
 
 # Arguments
-- `U::SemiOrthogonal`: The reference semi-orthogonal matrix.
-- `V::SemiOrthogonal`: The semi-orthogonal matrix to be sequentially evaluated.
+- `U::SemiOrthogonal`: The reference semi-orthogonal matrix (dimension D).
+- `V::SemiOrthogonal`: The empirical semi-orthogonal matrix to be sequentially evaluated (dimension k_V).
 
 # Keyword Arguments
 - `p::Int`: The order of the Schatten norm. Must be `1` or `2`. Defaults to `2`.
-- `scaled::Bool`: If true, the risk at each step `k` is scaled by `size(U, 2)`. Defaults to `false`.
+- `scaled::Bool`: If true, the risk at each step `k` is scaled by `D`. Defaults to `false`.
 """
 function geometric_risk_sequential(U::SemiOrthogonal, V::SemiOrthogonal; p::Int=2, scaled::Bool=false)
     @assert p in (1, 2) "p must be 1 or 2"
@@ -195,25 +193,29 @@ function geometric_risk_sequential(U::SemiOrthogonal, V::SemiOrthogonal; p::Int=
     p_dim_V, k_V = size(V)
     @assert p_dim_U == p_dim_V "Two matrices must have the same number of rows (p)."
 
-    risk_curve = zeros(Float64, D)
+    # The risk curve must evaluate every column in the empirical matrix V
+    risk_curve = zeros(Float64, k_V)
 
     if p == 2
-        # This implementation is optimized for p=2 (squared Frobenius norm).
-        # It avoids recomputing matrix products and SVDs in the loop.
         C = adjoint(U) * V # Pre-calculate the full D x k_V product
-        # Calculate the cumulative sum of squared norms down the rows of C
-        sch_pows_2 = cumsum(vec(sum(abs2, C; dims=2)))
 
-        for k in 1:D
-            risk = k + k_V - 2.0 * sch_pows_2[k]
+        # Calculate the sum of squared norms down the rows (dims=1) 
+        # to get the contribution of each column of V
+        col_sq_norms = vec(sum(abs2, C; dims=1))
+        sch_pows_2 = cumsum(col_sq_norms)
+
+        @inbounds for k in 1:k_V
+            # U has dimension D, V_k has dimension k
+            risk = D + k - 2.0 * sch_pows_2[k]
             risk_curve[k] = scaled ? risk / D : risk
         end
     else # p == 1
-        # This is less efficient as it re-computes the SVD for each k.
-        for k in 1:D
-            U_k = SemiOrthogonal(view(parent(U), :, 1:k))
-            sch = schatten_norm_pow(U_k, V; p=1)
-            risk = k + k_V - 2.0 * sch
+        @inbounds for k in 1:k_V
+            # Truncate the empirical matrix V, not U
+            V_k = SemiOrthogonal(view(parent(V), :, 1:k))
+            sch = schatten_norm_pow(U, V_k; p=1)
+
+            risk = D + k - 2.0 * sch
             risk_curve[k] = scaled ? risk / D : risk
         end
     end
