@@ -12,8 +12,8 @@ using .PlotUtils
 # --------------------------------------------------------------------
 #          Global Parameters
 # --------------------------------------------------------------------
-n = 300
-γ = 0.8
+n = 100
+γ = 5.0
 d_true = 15
 D_ref = 20
 α = 0.5 # Ratio of data to use for the training/reference fold
@@ -26,13 +26,13 @@ thres_lambda = sqrt(γ) * signal_thres(γ; α) + 1.0
 # lambdas = collect(d_true:-1:1) .* s .* sqrt(γ) .+ thres_lambda
 
 # Polynomial Decay
-s = 1.0         # Slope
+s = 5.0         # Slope
 poly_deg = 1.5    # Degree of Polynomial
 lambdas = collect(d_true:-1:1) .^ (poly_deg) .* s .* sqrt(γ) .+ 1.0;
 
 
-# Sanity check : Expected minimum d*(γ)
-limit_idx = lower_idx(lambdas, γ; α)
+# Sanity check : Expected minimum index
+limit_d_geom = lower_idx(lambdas, γ; α)
 limit_scaled_risk = [limit_geometric_risk(lambdas, γ, D_ref, k; α=α) for k in 1:D_ref] ./ D_ref;
 
 # --------------------------------------------------------------------
@@ -84,7 +84,7 @@ ax_risk = Axis(fig[1, 1],
 )
 plot_risk_curve!(ax_risk, scaled_risk_curve, d_true; label="Sample (d̂ = $estimated_d_geom)", color=:blue)
 
-plot_risk_curve!(ax_risk, limit_scaled_risk, d_true; label="Asymptotic", color=:black, linestyle=:dot)
+# plot_risk_curve!(ax_risk, limit_scaled_risk, d_true; label="Asymptotic", color=:black, linestyle=:dot)
 axislegend(ax_risk, position=:lt)
 
 ax_scree = Axis(fig[1, 2],
@@ -93,7 +93,7 @@ ax_scree = Axis(fig[1, 2],
     ylabel="Eigenvalue"
 )
 plot_scree!(ax_scree, sample_eigenvalues, d_true; label="Sample", color=:blue)
-plot_scree!(ax_scree, true_eigenvalues, d_true; label="True", color=:black, linestyle=:dot)
+# plot_scree!(ax_scree, true_eigenvalues, d_true; label="True", color=:black, linestyle=:dot)
 axislegend(ax_scree, position=:rt)
 
 display(fig)
