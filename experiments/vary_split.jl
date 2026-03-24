@@ -12,7 +12,7 @@ using .PlotUtils
 # --------------------------------------------------------------------
 #          Global Parameters
 # --------------------------------------------------------------------
-n = 200 # Increased slightly to ensure enough SVD components for extreme α splits
+n = 1000 # Increased slightly to ensure enough SVD components for extreme α splits
 γ = 5.0
 d_true = 15
 D_ref = 20
@@ -42,13 +42,13 @@ true_eigenvalues = [lambdas; fill(1.0, p - d_true)][1:D_ref]
 # --------------------------------------------------------------------
 #          Visualization
 # --------------------------------------------------------------------
-fig = Figure(size=(1000, 1000), fontsize=22)
+fig = Figure(size=(1000, 1000), fontsize=25)
 Label(fig[0, 1], "Varying Data Split Ratio α (n=$n, γ=$γ, D=$D_ref, d*=$d_true)", font=:bold, tellwidth=false)
 
 # ax_scree = Axis(fig[1, 1], title="True Eigenvalues", xlabel="Dimension (k)", ylabel="Eigenvalue (log scale)", yscale=log10)
 ax_scree = Axis(fig[1, 1], title="True Eigenvalues", xlabel="Dimension (k)", ylabel="Eigenvalue")
 
-plot_scree!(ax_scree, true_eigenvalues, d_true; label="True λ", color=:black)
+plot_scree!(ax_scree, true_eigenvalues, d_true; color=:black)
 
 ax_risk = Axis(fig[2, 1], title="Sample Risk Curves", xlabel="Candidate Dimension (k)", ylabel="Scaled Chordal Risk")
 
