@@ -1,6 +1,4 @@
-using Pkg
-Pkg.activate(".")
-using GeometricPCA
+# using GeometricPCA
 using LinearAlgebra
 using Random
 using Statistics
@@ -13,7 +11,7 @@ based on the given high-dimensional limit theorem.
 """
 function macroscopic_limit(gamma::Float64, lambdas::Vector{Float64}, k::Int)
     d = length(lambdas)
-    sum_term = 0.0
+    sum_alignment = 0.0
 
     # Iterate over the intersection of I and J up to min(d, k)
     for j in 1:min(d, k)
@@ -23,13 +21,13 @@ function macroscopic_limit(gamma::Float64, lambdas::Vector{Float64}, k::Int)
         if l >= 1.0 + sqrt(gamma)
             num = 1.0 - gamma / (l - 1.0)^2
             den = 1.0 + gamma / (l - 1.0)
-            sum_term += num / den
+            sum_alignment += num / den
         else
             @warn "Eigenvalue λ = $l does not satisfy the BBP condition (λ >= $(1 + sqrt(gamma))) and is excluded!"
         end
     end
 
-    return d + k - 2.0 * sum_term
+    return d + k - 2.0 * sum_alignment
 end
 
 """
