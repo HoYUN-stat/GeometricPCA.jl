@@ -1,3 +1,7 @@
+# --------------------------------------------------------------------
+#          Asymptotic behavior of Squared Chordal Distance for fixed p
+# --------------------------------------------------------------------
+
 # cd("experiments")
 # ] activate .
 
