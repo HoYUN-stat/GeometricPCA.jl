@@ -148,11 +148,11 @@ display(fig)
 filename = "figures/macro_bias_$(Dates.format(now(), "yymmdd_HHMMSS")).png"
 save(filename, fig)
 
---------------------------------------------------------------------
-         Post-Processing: Side-by-Side Layout
---------------------------------------------------------------------
-Since the data is already computed and plotted in the `fig` object,
-we can simply rearrange the existing Makie axes without rerunning.
+# --------------------------------------------------------------------
+#          Post-Processing: Side-by-Side Layout
+# --------------------------------------------------------------------
+# Since the data is already computed and plotted in the `fig` object,
+# we can simply rearrange the existing Makie axes without rerunning.
 
 all_axes = filter(x -> x isa Axis, fig.content)
 all_labels = filter(x -> x isa Label, fig.content)
