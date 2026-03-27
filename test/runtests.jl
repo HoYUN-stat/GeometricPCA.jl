@@ -1,10 +1,18 @@
 using GeometricPCA
 using Test
+using Random
+using Statistics
+using LinearAlgebra
+
+# A clean list of all your test files
+const TEST_FILES = [
+    "test_spike.jl",
+    "test_semiortho.jl",
+    "test_phasetrans.jl"
+]
 
 @testset "GeometricPCA.jl" begin
-    @testset "generate_spiked_data" begin
-        n, p, d = 100, 50, 5
-        X = generate_spiked_data(n, p, d, 10.0; noise_var=1.0)
-        @test size(X) == (n, p)
+    for file in TEST_FILES
+        include(file)
     end
 end
