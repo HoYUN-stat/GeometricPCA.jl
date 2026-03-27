@@ -2,7 +2,11 @@
 # ] activate .
 # dev ..
 using GeometricPCA
-using CairoMakie, Random, Statistics, Dates, LinearAlgebra
+using LinearAlgebra
+using Random
+using Statistics
+using Dates
+using CairoMakie
 
 include("../utils/plot_utils.jl")
 using .PlotUtils
@@ -13,7 +17,7 @@ using .PlotUtils
 #          Global Parameters
 # --------------------------------------------------------------------
 n = 100
-γ = 5.0
+γ = 10.0
 d_true = 15
 D_ref = 20
 α = 0.5 # Ratio of data to use for the training/reference fold
@@ -26,14 +30,16 @@ thres_lambda = sqrt(γ) * signal_thres(γ; α) + 1.0
 # lambdas = collect(d_true:-1:1) .* s .* sqrt(γ) .+ thres_lambda
 
 # Polynomial Decay
-s = 5.0         # Slope
+s = 3.0         # Slope
 poly_deg = 1.5    # Degree of Polynomial
 lambdas = collect(d_true:-1:1) .^ (poly_deg) .* s .* sqrt(γ) .+ 1.0;
 
 
 # Sanity check : Expected minimum index
 limit_d_geom = lower_idx(lambdas, γ; α)
-limit_scaled_risk = [limit_geometric_risk(lambdas, γ, D_ref, k; α=α) for k in 1:D_ref] ./ D_ref;
+limit_scaled_risk = [limit_geometric_risk(lambdas, γ, D_ref, k; p=2, α=α) for k in 1:D_ref] ./ D_ref;
+limit_scaled_risk_BW = [limit_geometric_risk(lambdas, γ, D_ref, k; p=1, α=α) for k in 1:D_ref] ./ D_ref;
+
 
 # --------------------------------------------------------------------
 #          Data Generation
@@ -59,9 +65,14 @@ V_val = SemiOrthogonal(V_validate[:, 1:D_ref]);
 # Evaluate Geometric Risk
 # risk_curve = geometric_risk_sequential(U_ref, V_val)
 scaled_risk_curve = geometric_risk_sequential(U_ref, V_val; scaled=true);
+scaled_risk_curve_BW = geometric_risk_sequential(U_ref, V_val; p=1, scaled=true);
+
+
 
 # Display Geometric Risk Results
 estimated_d_geom = argmin(scaled_risk_curve)
+estimated_d_geom_BW = argmin(scaled_risk_curve_BW)
+
 
 # Calculate Eigenvalues for Scree Plot
 # Eigenvalues from the full sample covariance matrix
@@ -82,9 +93,12 @@ ax_risk = Axis(fig[1, 1],
     xlabel="Candidate Dimension (k)",
     ylabel="Scaled Chordal Risk"
 )
-plot_risk_curve!(ax_risk, scaled_risk_curve, d_true; label="Sample (d̂ = $estimated_d_geom)", color=:blue)
 
-# plot_risk_curve!(ax_risk, limit_scaled_risk, d_true; label="Asymptotic", color=:black, linestyle=:dot)
+plot_risk_curve!(ax_risk, scaled_risk_curve, d_true; label="Chordal (d̂ = $estimated_d_geom)", color=:blue)
+plot_risk_curve!(ax_risk, limit_scaled_risk, d_true; label="Asymp (Chordal)", color=:blue, linestyle=:dot)
+
+plot_risk_curve!(ax_risk, scaled_risk_curve_BW, d_true; label="BW (d̂ = $estimated_d_geom_BW)", color=:orange)
+plot_risk_curve!(ax_risk, limit_scaled_risk_BW, d_true; label="Asymp (BW)", color=:orange, linestyle=:dot)
 axislegend(ax_risk, position=:lt)
 
 ax_scree = Axis(fig[1, 2],
@@ -92,8 +106,8 @@ ax_scree = Axis(fig[1, 2],
     xlabel="Principal Component Index",
     ylabel="Eigenvalue"
 )
-plot_scree!(ax_scree, sample_eigenvalues, d_true; label="Sample", color=:blue)
-# plot_scree!(ax_scree, true_eigenvalues, d_true; label="True", color=:black, linestyle=:dot)
+plot_scree!(ax_scree, sample_eigenvalues, d_true; label="Sample", color=:black)
+plot_scree!(ax_scree, true_eigenvalues, d_true; label="True", color=:black, linestyle=:dot)
 axislegend(ax_scree, position=:rt)
 
 display(fig)

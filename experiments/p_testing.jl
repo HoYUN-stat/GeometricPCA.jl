@@ -29,7 +29,7 @@ function plot_risk_curve!(ax, risk_curve::Vector{Float64}, true_d::Int, p::Int)
 end
 
 # Loop over each p and D
-for i in 1:length(p_vec)
+for i in eachindex(p_vec)
     p = p_vec[i]
     println("Parameters: n=$n, p=$p, true_d=$true_d, D_max=$D_max, train_split_ratio=$train_split_ratio")
     risk_matrix[:, i] = risk_estimate(n, p, true_d, D_max, train_split_ratio, signal_strength, noise_var)

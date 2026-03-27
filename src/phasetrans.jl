@@ -6,6 +6,11 @@
 
 Computes the asymptotic cross-alignment limit `δ_l=f(s_l)`.
 Handles the ideal (α=1.0) and data-split (0 < α < 1) cases.
+
+# Arguments
+- `s::Float64`: Signal strength `(λ-1)/√γ`.
+- `γ::Float64`: Limit of `p/n`.
+- `α::Float64`: Split ratio in (0, 1].
 """
 function weight_bbp(s::Float64, γ::Float64; α::Float64=1.0)
     @assert γ > 0.0 "Gamma must be strictly positive."
@@ -35,6 +40,12 @@ end
 
 Returns `d_+(γ)` or `d_+(γ1, γ2)`, the number of spikes that strictly survive 
 the BBP transition in all available data splits.
+
+# Arguments
+- `lambdas::Vector{Float64}`: spikes bigger than tail eigenvalues `1`.
+- `γ::Float64`: Limit of `p/n`.
+- `α::Float64`: Split ratio in (0, 1]
+
 """
 function upper_idx(lambdas::Vector{Float64}, γ::Float64; α::Float64=1.0)
     @assert γ > 0.0
@@ -118,13 +129,27 @@ end
 # 4. Macroscopic Geometric Risk / Subspace Recovery
 # ------------------------------------------------------------------
 """
-    limit_geometric_risk(lambdas::Vector{Float64}, γ::Float64, D::Int, k::Int; α::Float64=1.0) -> Float64
+    limit_geometric_risk(lambdas::Vector{Float64}, γ::Float64, D::Int, k::Int; p::Int64=2, α::Float64=1.0) -> Float64
 
 Computes the deterministic limit of the chordal distance limit between the reference 
 subspace (dimension D) and the validation subspace (dimension k).
 Handles both ideal (α=1.0) and data-splitting (0 < α < 1) limits.
+
+# Arguments
+- `lambdas::Vector{Float64}`: spikes bigger than tail eigenvalues `1`.
+- `γ::Float64`: Limit of `p/n`.
+- `D::Int`: Dimension of the reference subspace.
+- `k::Int`: Dimension of the validation subspace.
+
+# Keyword Arguments
+- `p::Int`: The order of the Schatten norm. Must be `1` or `2`. Defaults to `2`.
+  - `p=1`: Returns the Nuclear norm (sum of singular values).
+  - `p=2`: Returns the squared Frobenius norm (`sum(σ²)`, where `σ` are singular values).
+- `α::Float64`: Split ratio in (0, 1]. Defaults to `1.0`.
+
 """
-function limit_geometric_risk(lambdas::Vector{Float64}, γ::Float64, D::Int, k::Int; α::Float64=1.0)
+function limit_geometric_risk(lambdas::Vector{Float64}, γ::Float64, D::Int, k::Int;
+    p::Int64=2, α::Float64=1.0)
     @assert γ > 0.0 "Gamma must be strictly positive."
     @assert 0.0 < α <= 1.0 "Split ratio α must be in (0, 1]."
     @assert D >= 1 && k >= 1 "Dimensions must be strictly positive."
@@ -145,7 +170,11 @@ function limit_geometric_risk(lambdas::Vector{Float64}, γ::Float64, D::Int, k::
 
         # weight_bbp inherently evaluates the appropriate cross-alignment 
         # based on the splitting ratio α
-        sum_alignment += weight_bbp(s_l, γ; α=α)
+        if p == 2
+            sum_alignment += weight_bbp(s_l, γ; α=α)
+        else
+            sum_alignment += sqrt(weight_bbp(s_l, γ; α=α))
+        end
     end
 
     # D_∞ = (|I| + |J|) - 2 * sum(alignments)
