@@ -89,7 +89,7 @@ true_eigenvalues = [lambdas; fill(1.0, p - d_true)][1:D_ref];
 #Figure 1(a)
 fig_pca=Figure(size = (500,500), fontsize=25)
 ax_risk = Axis(fig_pca[1,1],
-               title="Geometric PCA (α = $α)",
+               #title="Geometric PCA (α = $α)",
                xlabel="Candidate Dimension (k)",
                ylabel="Scaled Chordal Risk"
                )
@@ -100,13 +100,13 @@ plot_risk_curve!(ax_risk, scaled_risk_curve, d_true; label="Chordal (d̂ = $esti
 plot_risk_curve!(ax_risk, scaled_risk_curve_BW, d_true; label="BW (d̂ = $estimated_d_geom_BW)", color=:orange)
 #plot_risk_curve!(ax_risk, limit_scaled_risk_BW, d_true; label="Asymp (BW)", color=:orange, linestyle=:dot)
 axislegend(ax_risk, position=:lt)
-display(fig_pca)
-#save("figures/risk-curve_illustration.png", fig_pca)
+#display(fig_pca)
+save("figures/risk-curve_illustration.png", fig_pca)
 
 #Figure 1(b)
 fig_scree= Figure(size = (500,500), fontsize=25)
 ax_scree = Axis(fig_scree[1,1],
-                title="Scree Plot",
+                #title="Scree Plot",
                 xlabel="Principal Component Index",
                 ylabel="Eigenvalue"
                 )
@@ -114,8 +114,8 @@ plot_scree!(ax_scree, sample_eigenvalues, d_true; label="Sample", color=:black)
 #plot_scree!(ax_scree, true_eigenvalues, d_true; label="True", color=:black, linestyle=:dot)
 axislegend(ax_scree, position=:rt)
 
-display(fig_scree)
-#save("figures/bad_screeplot.png", fig_scree)
+#display(fig_scree)
+save("figures/bad_screeplot.png", fig_scree)
 
 # Save the Figure
 # filename = "figures/pca_comparison_$(Dates.format(now(), "yymmdd_HHMMSS")).png"
