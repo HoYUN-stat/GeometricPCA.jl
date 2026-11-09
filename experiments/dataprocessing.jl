@@ -2,6 +2,7 @@
 # This is only being run to create the dataset X,
 # which is saved to use for future analysis.
 
+using Pkg
 
 Pkg.add(["SnpArrays", "LinearAlgebra", "Random", "Statistics"])
 
