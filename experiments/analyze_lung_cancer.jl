@@ -16,7 +16,7 @@ const FIGURE_PATH = joinpath(FIGURE_DIR, "lung_cancer_geometricpca_risk.png")
 const DATASET_LABEL = "Lung cancer"
 const ALPHA = 0.5
 const D_REF = 20
-const RANDOM_SEED = 123
+const RANDOM_SEED = 523
 
 "Read the processed lung CSV, skipping its cancer-type and split columns."
 function read_lung_matrix(path::AbstractString)
