@@ -9,9 +9,9 @@ using CairoMakie
 
 const data_dir = joinpath(@__DIR__, "datasets")
 const fig_dir = joinpath(@__DIR__, "figures")
-const input_file = joinpath(data_dir, "Lung_JinWang2016_p251_n181.csv")
-const result_file = joinpath(data_dir, "lung_cancer_geometricpca_risk.csv")
-const fig_file = joinpath(fig_dir, "lung_cancer_geometricpca_risk.png")
+const input_file = joinpath(data_dir, "Lung_combined.csv")
+const result_file = joinpath(data_dir, "lung_cancer_full_risk.csv")
+const fig_file = joinpath(fig_dir, "lung_cancer_full_risk.png")
 
 const dataset = "Lung cancer"
 const alpha = 0.5
@@ -50,7 +50,6 @@ function main()
     isfile(input_file) || error("Processed lung matrix not found: $input_file")
     mkpath(fig_dir)
     X = read_lung_matrix(input_file)
-    size(X) == (181, 251) || error("Expected lung data size (181, 251), got $(size(X))")
 
     n, p = size(X)
     split_point = round(Int, n * alpha)
