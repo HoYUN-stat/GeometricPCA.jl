@@ -10,14 +10,14 @@ using JLD2
 
 const DATA_DIR = joinpath(@__DIR__, "datasets")
 const FIGURE_DIR = joinpath(@__DIR__, "figures")
-const INPUT_PATH = joinpath(DATA_DIR, "1000G_matrix_BEMA_preprocessing.jld2")
-const RESULT_PATH = joinpath(DATA_DIR, "1000_genomes_geometricpca_risk.csv")
-const FIGURE_PATH = joinpath(FIGURE_DIR, "1000_genomes_geometricpca_risk.png")
+const INPUT_PATH = joinpath(DATA_DIR, "1000G_matrix_2504x24249.jld2")
+const RESULT_PATH = joinpath(DATA_DIR, "1000_genomes_old_risk.csv")
+const FIGURE_PATH = joinpath(FIGURE_DIR, "1000_genomes_old_risk.png")
 
 const DATASET_LABEL = "1000 Genomes"
 const ALPHA = 0.5
 const D_REF = 30
-const RANDOM_SEED = 123
+const RANDOM_SEED = 523
 
 "Return the leading feature-space right singular vectors of a centered fold."
 function leading_feature_basis(X::AbstractMatrix{<:Real}, d::Int)
