@@ -10,7 +10,7 @@ const data_dir = joinpath(@__DIR__, "datasets")
 const input_file = joinpath(data_dir, "Lung_combined.csv")
 const result_file = joinpath(data_dir, "lung_cancer_penalized_scores.csv")
 
-const D = 20
+const D = 89
 const epsilon = 0.005
 const alpha = 0.5
 const seed = 523
@@ -80,6 +80,9 @@ function main()
     split_point = round(Int, n * alpha)
     min(split_point, n - split_point) >= D || error("Too few samples per fold for D=$D")
 
+    hcut = h_quantile(D, 1 - epsilon)
+    t = hcut / p
+
     indices = randperm(MersenneTwister(seed), n)
     reference = view(X, indices[1:split_point], :)
     validate = view(X, indices[split_point+1:end], :)
@@ -89,8 +92,6 @@ function main()
 
     q = vec(sum(abs2, C; dims=1))
     nuclear_prefix = [sum(svdvals(C[:, 1:k])) for k in 1:D]
-    hcut = h_quantile(D, 1 - epsilon)
-    t = hcut / p
     theta_scores = vcat(0.0, 2 .* collect(1:D) .* t .- 2 .* cumsum(q))
     wasserstein_scores = vcat(0.0, 2 .* collect(1:D) .* sqrt(t) .- 2 .* nuclear_prefix)
     selected_theta = argmin(theta_scores) - 1
@@ -105,6 +106,7 @@ function main()
 
     println("Lung cancer GDS scores: n=$n, p=$p, folds=$split_point/$(n - split_point)")
     println("  D=$D, epsilon=$epsilon, H_D quantile=$hcut, t=H_D/p=$t")
+    println("  Seed: $seed")
     println("  Theta selected dimension: $selected_theta")
     println("  Wasserstein selected dimension: $selected_wasserstein")
     println("Saved score curves to $result_file")
