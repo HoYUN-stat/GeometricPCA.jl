@@ -1,10 +1,11 @@
 # Run from the repository root with:
 #   julia --project=experiments experiments/analyze_lung_cancer_gds_scores.jl
 
-using LinearAlgebra
-using Random
-using Statistics
+using LinearAlgebra: svdvals
 using Distributions: Chisq, cdf
+
+include(joinpath(@__DIR__, "src", "LungMethodSupport.jl"))
+using .LungMethodSupport
 
 const data_dir = joinpath(@__DIR__, "datasets")
 const input_file = joinpath(data_dir, "Lung_combined.csv")
@@ -45,46 +46,11 @@ function h_quantile(d::Integer, probability::Real)
     return (lo + hi) / 2
 end
 
-"Read the processed lung CSV, skipping its cancer-type and split columns."
-function read_lung_matrix(path::AbstractString)
-    lines = readlines(path)
-    isempty(lines) && error("Lung data file is empty: $path")
-
-    header = split(lines[1], ',')
-    length(header) >= 3 || error("Expected two covariate columns and at least one feature")
-    X = Matrix{Float64}(undef, length(lines) - 1, length(header) - 2)
-
-    for (sample, line) in enumerate(@view lines[2:end])
-        values = split(line, ',')
-        length(values) == length(header) || error("Inconsistent number of columns in lung CSV at row $sample")
-        for feature in 1:size(X, 2)
-            X[sample, feature] = parse(Float64, values[feature + 2])
-        end
-    end
-    return X
-end
-
-"Return the leading feature-space right singular vectors of a centered fold."
-function leading_feature_basis(X::AbstractMatrix{<:Real}, d::Int)
-    n, p = size(X)
-    d <= min(n, p) || error("Requested D=$d exceeds fold rank bound min(n=$n, p=$p)")
-    centered = Matrix{Float64}(X .- mean(X; dims=1))
-    decomposition = svd(centered; full=false)
-    return Matrix(adjoint(decomposition.Vt[1:d, :]))
-end
-
 function main()
     isfile(input_file) || error("Processed lung matrix not found: $input_file")
     X = read_lung_matrix(input_file)
     n, p = size(X)
-    split_point = round(Int, n * alpha)
-    min(split_point, n - split_point) >= D || error("Too few samples per fold for D=$D")
-
-    indices = randperm(MersenneTwister(seed), n)
-    reference = view(X, indices[1:split_point], :)
-    validate = view(X, indices[split_point+1:end], :)
-    U_reference = leading_feature_basis(reference, D)
-    V_validate = leading_feature_basis(validate, D)
+    U_reference, V_validate, split_point = split_lung_bases(X; d=D, alpha, seed)
     C = U_reference' * V_validate
 
     q = vec(sum(abs2, C; dims=1))

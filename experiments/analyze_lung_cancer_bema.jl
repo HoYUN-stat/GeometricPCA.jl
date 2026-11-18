@@ -9,29 +9,16 @@ using Random
 using Statistics
 using Distributions: Gamma
 
-const data_file = joinpath(@__DIR__, "datasets", "Lung_JinWang2016_p251_n181.csv")
-const result_file = joinpath(@__DIR__, "datasets", "lung_cancer_bema_jinwang.csv")
+if !isdefined(@__MODULE__, :LungMethodSupport)
+    include(joinpath(@__DIR__, "src", "LungMethodSupport.jl"))
+end
+using .LungMethodSupport
+
+const BEMA_RESULT_FILE = joinpath(@__DIR__, "datasets", "lung_cancer_bema_results.csv")
 const alpha = 0.1
 const seed = 523
 const optimization_replicates = 10
 const final_replicates = 500
-
-"Read the processed lung CSV, skipping its cancer-type and split columns."
-function read_lung_matrix(path::AbstractString)
-    lines = readlines(path)
-    isempty(lines) && error("Lung data file is empty: $path")
-    header = split(lines[1], ',')
-    length(header) >= 3 || error("Expected two covariate columns and at least one feature")
-    X = Matrix{Float64}(undef, length(lines) - 1, length(header) - 2)
-    for (sample, line) in enumerate(@view lines[2:end])
-        values = split(line, ',')
-        length(values) == length(header) || error("Inconsistent number of columns in lung CSV at row $sample")
-        for feature in 1:size(X, 2)
-            X[sample, feature] = parse(Float64, values[feature + 2])
-        end
-    end
-    return X
-end
 
 "Eigenvalues of X'X/n in decreasing order, using the smaller Gram matrix."
 function sample_eigenvalues(X::AbstractMatrix{<:Real})
@@ -84,9 +71,7 @@ function bounded_minimum(f, lower, upper; tolerance=sqrt(eps(Float64)))
     return f1 <= f2 ? x1 : x2
 end
 
-function main()
-    isfile(data_file) || error("Processed lung matrix not found: $data_file")
-    X = read_lung_matrix(data_file)
+function bema_rank(X; seed = 523)
     n, p = size(X)
     m = min(n, p)
     indices = floor(Int, m * alpha):floor(Int, m * (1 - alpha))
@@ -109,16 +94,33 @@ function main()
     threshold = maximum(scale .* upper_spectrum)
     estimated_k = count(>(threshold), observed)
 
-    println("JinWang lung BEMA SQM_Gamma: n=$n, p=$p")
-    println("  alpha=$alpha, fitted Gamma shape=$shape")
-    println("  90th-percentile null spectral edge=$threshold")
-    println("  Estimated K=$estimated_k")
-
-    open(result_file, "w") do io
-        println(io, "n,p,alpha,gamma_shape,scale,null_edge,estimated_K")
-        println(io, "$n,$p,$alpha,$shape,$scale,$threshold,$estimated_k")
-    end
-    println("Saved estimate to $result_file")
+    return (; n, p, estimated_K = estimated_k, gamma_shape = shape,
+            scale, null_edge = threshold)
 end
 
-main()
+function run_bema_analysis()
+    rows = NamedTuple[]
+    for dataset in LUNG_DATASETS
+        isfile(dataset.path) || error("Processed lung matrix not found: $(dataset.path)")
+        X = read_lung_matrix(dataset.path)
+        estimate = bema_rank(X; seed)
+        push!(rows, (; dataset = dataset.name, n = estimate.n, p = estimate.p,
+                     method = "BEMA", selected_dimension = estimate.estimated_K,
+                     gamma_shape = estimate.gamma_shape, scale = estimate.scale,
+                     null_edge = estimate.null_edge))
+        println("$(dataset.name): BEMA SQM_Gamma dimension=$(estimate.estimated_K), n=$(estimate.n), p=$(estimate.p)")
+    end
+
+    open(BEMA_RESULT_FILE, "w") do io
+        println(io, "dataset,n,p,method,selected_dimension,gamma_shape,scale,null_edge")
+        for row in rows
+            println(io, join(string.(values(row)), ','))
+        end
+    end
+    println("Saved BEMA results to $BEMA_RESULT_FILE")
+    return rows
+end
+
+if abspath(PROGRAM_FILE) == @__FILE__
+    run_bema_analysis()
+end

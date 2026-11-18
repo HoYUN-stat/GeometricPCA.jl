@@ -1,0 +1,3 @@
+dataset,n,p,method,selected_dimension,threshold,threshold_multiplier,aspect_ratio
+Lung_combined,181,12533,Gavish-Donoho,61,16325.473444807449,1.4469614920463796,0.014441873454081225
+Lung_JinWang2016_p251_n181,181,251,Gavish-Donoho,39,17.81251594819635,2.4624250201199267,0.7211155378486056
