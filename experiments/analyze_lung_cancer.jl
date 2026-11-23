@@ -9,11 +9,11 @@ using .LungMethodSupport
 
 const data_dir = joinpath(@__DIR__, "datasets")
 const fig_dir = joinpath(@__DIR__, "figures")
-const input_file = joinpath(data_dir, "Lung_combined.csv")
-const result_file = joinpath(data_dir, "lung_cancer_full_risk.csv")
-const fig_file = joinpath(fig_dir, "lung_cancer_full_risk.png")
+const input_file = joinpath(data_dir, "Lung_JinWang2016_p251_n181.csv")
+const result_file = joinpath(data_dir, "lung_cancer_pruned_risk.csv")
+const fig_file = joinpath(fig_dir, "lung_cancer_pruned_risk.png")
 
-const dataset = "Lung cancer"
+const dataset = "Lung cancer (JinWang2016, 251 features)"
 const alpha = 0.5
 const d_ref = 20
 const seed = 523
