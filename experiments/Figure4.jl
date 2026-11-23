@@ -4,7 +4,7 @@
 using GeometricPCA
 using CairoMakie
 
-include(joinpath(@__DIR__, "src", "LungMethodSupport.jl"))
+include(joinpath(@__DIR__, "LungMethodSupport.jl"))
 using .LungMethodSupport
 
 const data_dir = joinpath(@__DIR__, "datasets")

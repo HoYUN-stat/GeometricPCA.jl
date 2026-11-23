@@ -5,7 +5,7 @@ using LinearAlgebra
 using Statistics
 
 if !isdefined(@__MODULE__, :LungMethodSupport)
-    include(joinpath(@__DIR__, "src", "LungMethodSupport.jl"))
+    include(joinpath(@__DIR__, "LungMethodSupport.jl"))
 end
 using .LungMethodSupport
 
