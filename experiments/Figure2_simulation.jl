@@ -109,12 +109,9 @@ T_limit = generate_theoretical_limit(p, d, k1, lambdas, epsilon)
 
 # Setup Figure using CairoMakie
 fig = Figure(size=(800, 800), fontsize=25)
-#Label(fig[0, 1], text="Asymptotic Behavior(p=$p, d* = $d, n_MC = $n_trials)",
-    #font=:bold)
 
 ax1 = Axis(fig[1, 1], title="Empirical Histograms (k = $k1 ≤ d*=$d)",
            xlabel=L"n [ l_{\Theta}(\mathcal{U}_{[d^{*}]}, \hat{\mathcal{V}}_{[k]})^{2} - (d^{*} - k) ]", ylabel="Density")
-#ax2 = Axis(fig[1, 2], title="Empirical Histograms (k = $k2 > d*, Recentered)", xlabel="Statistic Value - 2*n*(k-d*)", ylabel="Density")
 
 colors = [:red, :orange, :yellow, :green, :blue, :purple]
 
@@ -127,19 +124,12 @@ for (i, n) in enumerate(ns)
 
     # Right plot: k2, recentered
     T_n_vals_k2 = T_n_vals[:, 2] .- 2 * n * (k2 - d)
-    #density!(ax2, T_n_vals_k2, color=(colors[i], 0.4), label="n = $n", strokewidth=2)
 end
 
-# Add theoretical limit last on the first plot
+# Add theoretical limit last
 density!(ax1, T_limit, color=:transparent, strokecolor=:black, strokewidth=3, linestyle=:dash, label="Theoretical")
 
 axislegend(ax1, position=:rt)
 xlims!(ax1, 0, 30)
 
-#axislegend(ax2, position=:rt)
-
 display(fig)
-
-# Save the figure
-filename = "figures/asymp_transition_$(Dates.format(now(), "yymmdd_HHMMSS")).png"
-save(filename, fig)
